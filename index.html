@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CK Lottery Premium Prediction</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+/* 
+    THEME: PURPLE & DARK 
+    Main BG: #0b0f1a (Keep dark for contrast) or #120d1d (Purple Tint)
+    Accent: #9d4edd
+*/
+:root {
+    --bg-color: #120d1d;
+    --card-bg: #241b35;
+    --accent: #9d4edd;
+    --accent-glow: rgba(157, 78, 221, 0.5);
+    --text-primary: #ffffff;
+    --text-secondary: #b8b8b8;
+    --big-color: #ff9100;
+    --small-color: #00e5ff;
+}
+
+body { margin:0; background: var(--bg-color); color: var(--text-primary); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+
+/* Key System Overlay */
+#keyOverlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(18, 13, 29, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.key-box {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+
+.key-input {
+    width: 100%;
+    padding: 15px;
+    margin: 20px 0;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #5a3e85;
+    border-radius: 10px;
+    color: white;
+    font-size: 18px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.key-btn {
+    background: linear-gradient(135deg, #7b2cbf, #9d4edd);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+.key-btn:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent); }
+.key-link { color: var(--accent); text-decoration: none; font-size: 14px; margin-top: 10px; display: block; }
+
+/* Main UI */
+.nav-button {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--accent);
+    color: white; border: none;
+    width: 50px; height: 50px; border-radius: 50%;
+    font-size: 20px;
+    box-shadow: 0 4px 15px var(--accent-glow);
+    z-index: 1000;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.prediction-panel {
+    position: fixed;
+    bottom: 0; left: 0; width: 100%; height: 85vh;
+    background: var(--bg-color);
+    border-radius: 30px 30px 0 0;
+    box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+    z-index: 1001;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+}
+
+.close-bar {
+    width: 40px; height: 5px; background: rgba(255,255,255,0.2);
+    border-radius: 5px; margin: 0 auto 15px;
+}
+
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+/* Prediction Card Redesign */
+.pred-card-compact {
+    background: linear-gradient(145deg, #241b35, #1a1225);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    margin-bottom: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pred-card-compact::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(157,78,221,0.1) 0%, transparent 70%);
+    animation: rotate 10s linear infinite;
+}
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.pred-info { z-index: 1; text-align: left; }
+.pred-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.pred-value { font-size: 24px; font-weight: bold; color: var(--accent); margin-top: 5px; }
+.pred-timer { font-size: 14px; color: #fff; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 5px; display: inline-block; margin-top: 5px;}
+
+.pred-result-box {
+    z-index: 1;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.big-badge { background: var(--big-color); color: #000; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 18px; box-shadow: 0 0 10px rgba(255, 145, 0, 0.4); }
+.small-badge { background: var(--small-color); color: #000; padding: 5px 15px; border-radius: 8px; font-weight: 900; font-size: 18px; box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+
+.win-rate {
+    font-size: 12px; 
+    color: #00ff7f; 
+    margin-top: 5px; 
+    display: flex; 
+    align-items: center; 
+    gap: 5px;
+    background: rgba(0, 255, 127, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Pattern Selector */
+.pattern-control {
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.control-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.auto-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.auto-btn.active { background: var(--accent); color: white; }
+
+.pattern-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.pattern-btn {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    padding: 8px 2px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    text-align: center;
+}
+.pattern-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(157, 78, 221, 0.1); }
+
+/* Results Table */
+.results-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: rgba(0,0,0,0.3); color: var(--text-secondary); padding: 10px; font-weight: normal; text-align: center; }
+td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+.future-row { background: rgba(157, 78, 221, 0.1); border-left: 3px solid var(--accent); }
+.res-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+.res-big { color: var(--big-color); background: rgba(255, 145, 0, 0.1); }
+.res-small { color: var(--small-color); background: rgba(0, 229, 255, 0.1); }
+.status-win { color: #00ff7f; }
+.status-lose { color: #ff4d4d; }
+.status-wait { color: #aaa; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.5; } }
+
+/* Responsive */
+@media(min-width: 768px) {
+    .prediction-panel { width: 400px; height: auto; bottom: 20px; left: 20px; border-radius: 20px; transform: translateX(-150%); }
+    .prediction-panel.open { transform: translateX(0); }
+}
+@media(max-width: 767px) {
+    .prediction-panel.open { transform: translateY(0); }
+}
+
+/* Mobile enhancements */
+@media(max-width: 480px) {
+    .key-box { max-width: 340px; padding: 20px; }
+    .pred-card-compact { padding: 12px; }
+    .pred-value { font-size: 20px; }
+    .big-badge, .small-badge { font-size: 16px; padding: 4px 12px; }
+    .pattern-grid { grid-template-columns: repeat(2, 1fr); }
+    .pattern-btn { font-size: 9px; padding: 6px 2px; }
+    .prediction-panel { height: 80vh; }
+    .results-card { overflow-x: auto; }
+    table { min-width: 420px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- Key System Overlay -->
+<div id="keyOverlay">
+    <div class="key-box">
+        <h2 style="color: var(--accent); margin-top: 0;">PREMIUM ACCESS</h2>
+        <p style="color: #aaa; font-size: 14px;">Key validation required</p>
+        <button class="key-btn" onclick="validateAndEnter()">ENTER</button>
+        <button class="key-btn" onclick="copyKey()" style="background: linear-gradient(135deg, #2cbf7b, #4edd9d);">COPY KEY</button>
+        <div id="keyStatus" style="margin-top: 10px; font-size: 13px;"></div>
+    </div>
+</div>
+
+<!-- Main Button -->
+<button class="nav-button" onclick="togglePanel()"><i class="fas fa-bolt"></i></button>
+
+<!-- Prediction Panel -->
+<div class="prediction-panel" id="predPanel">
+    <div class="panel-header" onclick="togglePanel()">
+        <div class="close-bar"></div>
+        <h3 style="margin:0; font-weight:600; color:white;">Rex's 30s Prediction</h3>
+    </div>
+    
+    <div class="panel-content">
+        <!-- Main Prediction Card -->
+        <div class="pred-card-compact">
+            <div class="pred-info">
+                <div class="pred-label">NEXT ROUND</div>
+                <div class="pred-value" id="nextIssue">--</div>
+                <div class="pred-timer" id="timer">--:--</div>
+            </div>
+            <div class="pred-result-box">
+                <div id="predictionBadge" class="big-badge">--</div>
+                <div class="win-rate"><i class="fas fa-chart-line"></i> <span id="winRateDisplay">0%</span></div>
+            </div>
+        </div>
+
+        <!-- Pattern Controls -->
+        <div class="pattern-control">
+            <div class="control-header">
+                <span style="font-size:12px; font-weight:bold; color:var(--text-secondary);">ALGORITHM</span>
+                <button class="auto-btn active" id="autoBtn" onclick="toggleAuto()">AUTO SELECT</button>
+            </div>
+            <div class="pattern-grid">
+                <div class="pattern-btn" id="p1" onclick="selectPattern(1)">MODE 1</div>
+                <div class="pattern-btn" id="p2" onclick="selectPattern(2)">MODE 2</div>
+                <div class="pattern-btn" id="p3" onclick="selectPattern(3)">MODE 3</div>
+                <div class="pattern-btn" id="p4" onclick="selectPattern(4)">MODE 4</div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="results-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Predict</th>
+                        <th>Result</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable">
+                    <tr><td colspan="4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="text-align:center; margin-top:20px; color:#555; font-size:10px;">
+            AI PREDICTION SYSTEM v2.0
+        </div>
+    </div>
+</div>
+
+<!-- Website Frame -->
+<iframe src="https://cklottery.top" style="position:fixed; top:0; left:0; width:100%; height:100%; border:none; z-index:0;"></iframe>
+
+<script>
+// --- CONFIGURATION ---
+// IMPORTANT: Replace this URL with your raw GitHub keys.txt URL
+const KEYS_URL = "https://raw.githubusercontent.com/RushyGitHu/keysys/main/keys.txt"; 
+
+const LIVE_API = "https://ckygjf6r.com/api/webapi/GetGameIssue";
+const RESULT_API = "https://ckygjf6r.com/api/webapi/GetNoaverageEmerdList";
+// Using signatures from previous file
+const livePayload = { language:0, random:"3ddb347c89eb48c8a3425f997f3ccdcc", signature:"56AC4618105AA987F315A6FFF1F885A3", timestamp:1766042223, typeId:30 };
+const resultPayload = { language:0, pageNo:1, pageSize:10, random:"f9ae158be6ec46a98f965051d29a17c4", signature:"3812D3DB75343C84AFFE0F79A34CEFE7", timestamp:1766141978, typeId:30 };
+
+// --- STATE ---
+let currentPattern = 1;
+let isAuto = true;
+let historyData = [];
+let latestIssue = "";
+let latestResult = null;
+let timerInterval = null;
+let remainingSeconds = 0;
+let currentIssueStr = null;
+
+// --- KEY SYSTEM ---
+async function validateAndEnter() {
+    const status = document.getElementById('keyStatus');
+    status.innerHTML = "Validating...";
+    
+    try {
+        const localKey = localStorage.getItem('savedKey');
+        if (!localKey) {
+            status.innerHTML = "<span style='color:red'>No key saved locally</span>";
+            return;
+        }
+
+        // Fetch keys from GitHub
+        let validKeys = [];
+        if (KEYS_URL.includes("USER/REPO")) {
+             // Placeholder handling for demonstration
+             console.warn("Using local keys for testing since URL is placeholder");
+             validKeys = ["Rex-TEST-123", "Rex-DEMO-KEY"];
+        } else {
+             const res = await fetch(`${KEYS_URL}?nocache=${Date.now()}`);
+             if(!res.ok) throw new Error("Failed to fetch keys");
+             const rawText = await res.text();
+             const text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
+             validKeys = text.split('\n').map(k => k.trim());
+        }
+
+        const localUpper = localKey.trim().toUpperCase();
+        const validUpper = validKeys.map(k => k.toUpperCase());
+        if(validUpper.includes(localUpper)) {
+            status.innerHTML = "<span style='color:#00ff7f'>Access Granted</span>";
+            setTimeout(() => {
+                document.getElementById('keyOverlay').style.display = 'none';
+                document.getElementById('predPanel').classList.add('open');
+                startRound();
+            }, 1000);
+        } else {
+            status.innerHTML = "<span style='color:red'>Key not found in database</span>";
+        }
+    } catch(e) {
+        console.error(e);
+        status.innerHTML = "<span style='color:red'>Error connecting to server</span>";
+    }
+}
+
+function copyKey() {
+    const status = document.getElementById('keyStatus');
+    let key = localStorage.getItem('savedKey');
+    if (!key) {
+        const prefix = 'Rex';
+        const seg = () => Math.random().toString(36).substr(2, 4).toUpperCase();
+        key = `${prefix}-${seg()}-${seg()}-${seg()}`;
+        localStorage.setItem('savedKey', key);
+    }
+    navigator.clipboard.writeText(key).then(() => {
+        status.innerHTML = "<span style='color:#00ff7f'>Key copied: " + key + "</span>";
+    }).catch(() => {
+        status.innerHTML = "<span style='color:red'>Failed to copy key</span>";
+    });
+}
+
+// No auto-fill; key is handled via localStorage and ENTER button
+
+// --- PREDICTION LOGIC ---
+
+function getBigSmall(num) {
+    return Number(num) >= 5 ? "BIG" : "SMALL";
+}
+
+// Pattern 1: 1 - 3 + latest number (last digit)
+function pattern1(issue, lastNumber) {
+    // Logic: 1 - 3 + lastNumber.
+    // Example: lastNumber=7. 1-3+7 = 5 -> BIG.
+    // Example: lastNumber=0. 1-3+0 = -2 -> 2 -> SMALL.
+    let val = 1 - 3 + Number(lastNumber);
+    val = Math.abs(val);
+    if(val > 9) val = val % 10;
+    return getBigSmall(val);
+}
+
+// Pattern 2: Follow (Copy current)
+function pattern2(issue, lastNumber) {
+    return getBigSmall(lastNumber);
+}
+
+// Pattern 3: Reverse (Opposite of current)
+function pattern3(issue, lastNumber) {
+    return getBigSmall(lastNumber) === "BIG" ? "SMALL" : "BIG";
+}
+
+// Pattern 4: Legacy (Last 2 digits logic from old code)
+function pattern4(issue, lastNumber) {
+    const last2 = String(issue).slice(-2);
+    let result = Number(last2[0]) - Number(last2[1]) + Number(lastNumber);
+    if(result < 0) result = Math.abs(result);
+    if(result > 9) result = Number(String(result).slice(-1));
+    return result >= 5 ? "BIG" : "SMALL";
+}
+
+const patterns = {
+    1: pattern1,
+    2: pattern2,
+    3: pattern3,
+    4: pattern4
+};
+
+// --- WIN RATE & AUTO SELECT ---
+function calculateWinRates() {
+    // Check last 20 results to determine best pattern
+    const scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    const total = Math.min(historyData.length - 1, 20); // Need at least 1 past result to predict
+    
+    if (total < 1) return { best: 1, rates: scores };
+
+    // Iterate history (newest first)
+    // We want to see if Pattern X correctly predicted item[i] based on item[i+1]
+    for(let i = 0; i < total; i++) {
+        const current = historyData[i]; // The result we are checking
+        const prev = historyData[i+1];  // The data used to predict
+        
+        const actual = getBigSmall(current.number);
+        
+        for(let p = 1; p <= 4; p++) {
+            const pred = patterns[p](prev.issueNumber, prev.number);
+            if(pred === actual) scores[p]++;
+        }
+    }
+
+    // Find best
+    let bestPattern = 1;
+    let maxScore = -1;
+    for(let p = 1; p <= 4; p++) {
+        if(scores[p] > maxScore) {
+            maxScore = scores[p];
+            bestPattern = p;
+        }
+    }
+
+    return { best: bestPattern, rates: scores, total: total };
+}
+
+// --- UI UPDATES ---
+function togglePanel() {
+    document.getElementById('predPanel').classList.toggle('open');
+}
+
+function toggleAuto() {
+    isAuto = !isAuto;
+    document.getElementById('autoBtn').classList.toggle('active');
+    updatePredictionUI();
+}
+
+function selectPattern(p) {
+    if(isAuto) {
+        isAuto = false;
+        document.getElementById('autoBtn').classList.remove('active');
+    }
+    currentPattern = p;
+    updateControls();
+    updatePredictionUI();
+}
+
+function updateControls() {
+    // Highlight active pattern button
+    for(let i=1; i<=4; i++) {
+        const btn = document.getElementById(`p${i}`);
+        if(i === currentPattern) btn.classList.add('active');
+        else btn.classList.remove('active');
+    }
+}
+
+function updatePredictionUI() {
+    if(!historyData || historyData.length === 0) return;
+
+    // 1. Determine active pattern
+    if(isAuto) {
+        const stats = calculateWinRates();
+        currentPattern = stats.best;
+        updateControls();
+        // Update win rate display
+        const rate = Math.round((stats.rates[currentPattern] / stats.total) * 100) || 0;
+        document.getElementById('winRateDisplay').innerText = `${rate}%`;
+    } else {
+        // Calculate win rate for manually selected pattern
+        const stats = calculateWinRates();
+        const rate = Math.round((stats.rates[currentPattern] / stats.total) * 100) || 0;
+        document.getElementById('winRateDisplay').innerText = `${rate}%`;
+    }
+
+    // 2. Predict Next Round
+    // We need the very latest result to predict the COMING round
+    const latest = historyData[0];
+    const prediction = patterns[currentPattern](latest.issueNumber, latest.number);
+    
+    // 3. Update Cards
+    const baseIssueStr = currentIssueStr || String(latest.issueNumber ?? latest.issue ?? latest.period ?? latest.round ?? '');
+    const nextIssueStr = baseIssueStr || '--';
+    document.getElementById('nextIssue').innerText = nextIssueStr;
+    
+    const badge = document.getElementById('predictionBadge');
+    badge.innerText = prediction;
+    badge.className = prediction === "BIG" ? "big-badge" : "small-badge";
+
+    // 4. Render Table (11 Rows: 1 Future + 10 History)
+    renderTable(nextIssueStr, prediction);
+}
+
+function renderTable(nextIssue, nextPred) {
+    const tbody = document.getElementById('resultsTable');
+    tbody.innerHTML = '';
+
+    // Row 1: Future
+    const futureRow = document.createElement('tr');
+    futureRow.className = 'future-row';
+    futureRow.innerHTML = `
+        <td>${nextIssue}</td>
+        <td><span class="res-badge ${nextPred === 'BIG' ? 'res-big' : 'res-small'}">${nextPred}</span></td>
+        <td><i class="fas fa-clock status-wait"></i></td>
+        <td class="status-wait">PENDING</td>
+    `;
+    tbody.appendChild(futureRow);
+
+    // Rows 2-11: History
+    const limit = 10;
+    for(let i = 0; i < limit && i < historyData.length; i++) {
+        const item = historyData[i];
+        const actual = getBigSmall(item.number);
+        
+        // To show what WAS predicted for this round, we need the PREVIOUS data (i+1)
+        // If i+1 exists, we can calculate what the prediction WOULD have been
+        let pastPred = "--";
+        let statusHtml = "--";
+        
+        if(i + 1 < historyData.length) {
+            const prev = historyData[i+1];
+            // Use current selected pattern to show how it would have performed?
+            // Or show what was actually predicted? 
+            // Usually users want to see how the CURRENT pattern performs history-wise.
+            pastPred = patterns[currentPattern](prev.issueNumber, prev.number);
+            
+            const isWin = pastPred === actual;
+            statusHtml = isWin ? '<span class="status-win">WIN</span>' : '<span class="status-lose">LOSE</span>';
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.issueNumber}</td>
+            <td><span class="res-badge ${pastPred === 'BIG' ? 'res-big' : 'res-small'}">${pastPred}</span></td>
+            <td><span class="res-badge ${actual === 'BIG' ? 'res-big' : 'res-small'}">${actual}</span></td>
+            <td>${statusHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+// --- DATA FETCHING ---
+async function startRound() {
+    try {
+        const res = await fetch(LIVE_API, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(livePayload)});
+        const data = await res.json();
+        const round = data.data;
+        
+        if(round) {
+            const ci = String(round.issueNumber ?? round.issueNo ?? round.issue ?? round.period ?? round.round ?? '');
+            if(ci) currentIssueStr = ci;
+            const endTs = new Date(round.endTime).getTime();
+            const now = new Date(round.serviceTime).getTime();
+            remainingSeconds = Math.floor((endTs - now) / 1000);
+            
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                if(remainingSeconds < 0) {
+                    clearInterval(timerInterval);
+                    loadResults(); // Refresh data
+                    setTimeout(startRound, 2000); // Restart cycle
+                }
+                const m = Math.floor(remainingSeconds / 60).toString().padStart(2,'0');
+                const s = (remainingSeconds % 60).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }, 1000);
+        }
+    } catch(e) {
+        console.error("Live API Error", e);
+    }
+    
+    // Always load results initially
+    loadResults();
+}
+
+async function loadResults() {
+    try {
+        const res = await fetch(RESULT_API, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(resultPayload)});
+        const data = await res.json();
+        if(data.data && data.data.list) {
+            historyData = data.data.list;
+            updatePredictionUI();
+        }
+    } catch(e) {
+        console.error("Result API Error", e);
+    }
+}
+
+</script>
+</body>
+</html>
