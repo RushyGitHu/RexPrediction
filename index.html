@@ -244,6 +244,25 @@ td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-al
     .results-card { overflow-x: auto; }
     table { min-width: 420px; }
 }
+.mode-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.mode-tab { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: var(--text-secondary); font-size: 11px; cursor: pointer; }
+.mode-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(157,78,221,0.1); }
+
+.row-enter { animation: slideDownIn 0.25s ease both; }
+.row-exit { animation: slideUpOut 0.25s ease both; }
+.switch-anim { animation: fadeSwap 0.25s ease both; }
+@keyframes slideDownIn { 
+    from { opacity: 0; transform: translateY(-8px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+@keyframes slideUpOut { 
+    from { opacity: 1; transform: translateY(0); } 
+    to { opacity: 0; transform: translateY(-8px); } 
+}
+@keyframes fadeSwap {
+    from { opacity: 0.6; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
 
 </style>
 </head>
@@ -267,10 +286,14 @@ td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-al
 <div class="prediction-panel" id="predPanel">
     <div class="panel-header" onclick="togglePanel()">
         <div class="close-bar"></div>
-        <h3 style="margin:0; font-weight:600; color:white;">Rex's 30s Prediction</h3>
+        <h3 style="margin:0; font-weight:600; color:white;">Rex's CK Prediction</h3>
     </div>
     
     <div class="panel-content">
+        <div class="mode-tabs">
+            <button id="tab30" class="mode-tab active" onclick="selectMode('30s')">30S</button>
+            <button id="tab1m" class="mode-tab" onclick="selectMode('1min')">1 MIN</button>
+        </div>
         <!-- Main Prediction Card -->
         <div class="pred-card-compact">
             <div class="pred-info">
@@ -322,18 +345,27 @@ td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-al
 </div>
 
 <!-- Website Frame -->
-<iframe src="https://www.cklottery.top/#/register?invitationCode=86224751753" style="position:fixed; top:0; left:0; width:100%; height:100%; border:none; z-index:0;"></iframe>
+<iframe src="http://www.cklottery.top/#/register?invitationCode=86224751753" style="position:fixed; top:0; left:0; width:100%; height:100%; border:none; z-index:0;"></iframe>
 
 <script>
 // --- CONFIGURATION ---
 // IMPORTANT: Replace this URL with your raw GitHub keys.txt URL
-const KEYS_URL = "https://raw.githubusercontent.com/RushyGitHu/keysys/main/keys.txt"; 
+const KEYS_URL = "https://raw.githubusercontent.com/RushyGitHu/keysys/refs/heads/main/keys.txt"; 
 
 const LIVE_API = "https://ckygjf6r.com/api/webapi/GetGameIssue";
 const RESULT_API = "https://ckygjf6r.com/api/webapi/GetNoaverageEmerdList";
 // Using signatures from previous file
 const livePayload = { language:0, random:"3ddb347c89eb48c8a3425f997f3ccdcc", signature:"56AC4618105AA987F315A6FFF1F885A3", timestamp:1766042223, typeId:30 };
 const resultPayload = { language:0, pageNo:1, pageSize:10, random:"f9ae158be6ec46a98f965051d29a17c4", signature:"3812D3DB75343C84AFFE0F79A34CEFE7", timestamp:1766141978, typeId:30 };
+
+const livePayload1m = { language:0, random:"9a87660e2954408e95a3f76f6427b60b", signature:"2DF9F94E82ABB385F007A09342468A4B", timestamp:1766159956, typeId:1 };
+const resultPayload1m = { language:0, pageNo:1, pageSize:10, random:"c6a11b11e811432daa3b980fd6b26ac1", signature:"7FE8E8B2DB0ECB481944163D047E3017", timestamp:1766159956, typeId:1 };
+
+let currentMode = '30s';
+const MODE_CONFIG = {
+    '30s': { liveApi: LIVE_API, resultApi: RESULT_API, livePayload: livePayload, resultPayload: resultPayload },
+    '1min': { liveApi: LIVE_API, resultApi: RESULT_API, livePayload: livePayload1m, resultPayload: resultPayload1m }
+};
 
 // --- STATE ---
 let currentPattern = 1;
@@ -490,6 +522,23 @@ function togglePanel() {
     document.getElementById('predPanel').classList.toggle('open');
 }
 
+function selectMode(mode) {
+    currentMode = mode;
+    const t30 = document.getElementById('tab30');
+    const t1m = document.getElementById('tab1m');
+    if (t30 && t1m) {
+        t30.classList.toggle('active', mode === '30s');
+        t1m.classList.toggle('active', mode === '1min');
+    }
+    const pc = document.querySelector('.panel-content');
+    if (pc) {
+        pc.classList.add('switch-anim');
+        setTimeout(() => pc.classList.remove('switch-anim'), 250);
+    }
+    if (timerInterval) clearInterval(timerInterval);
+    startRound();
+}
+
 function toggleAuto() {
     isAuto = !isAuto;
     document.getElementById('autoBtn').classList.toggle('active');
@@ -553,56 +602,75 @@ function updatePredictionUI() {
 
 function renderTable(nextIssue, nextPred) {
     const tbody = document.getElementById('resultsTable');
-    tbody.innerHTML = '';
+    const limit = 10;
+    const hasRows = tbody.children.length > 0;
 
-    // Row 1: Future
-    const futureRow = document.createElement('tr');
-    futureRow.className = 'future-row';
-    futureRow.innerHTML = `
+    const futureHtml = `
         <td>${nextIssue}</td>
         <td><span class="res-badge ${nextPred === 'BIG' ? 'res-big' : 'res-small'}">${nextPred}</span></td>
         <td><i class="fas fa-clock status-wait"></i></td>
         <td class="status-wait">PENDING</td>
     `;
-    tbody.appendChild(futureRow);
+    if (hasRows && tbody.firstElementChild && tbody.firstElementChild.classList.contains('future-row')) {
+        tbody.firstElementChild.innerHTML = futureHtml;
+        tbody.firstElementChild.classList.add('row-enter');
+        setTimeout(() => tbody.firstElementChild.classList.remove('row-enter'), 250);
+    } else {
+        const fr = document.createElement('tr');
+        fr.className = 'future-row row-enter';
+        fr.innerHTML = futureHtml;
+        tbody.insertBefore(fr, tbody.firstChild);
+        setTimeout(() => fr.classList.remove('row-enter'), 250);
+    }
 
-    // Rows 2-11: History
-    const limit = 10;
     for(let i = 0; i < limit && i < historyData.length; i++) {
         const item = historyData[i];
         const actual = getBigSmall(item.number);
         
-        // To show what WAS predicted for this round, we need the PREVIOUS data (i+1)
-        // If i+1 exists, we can calculate what the prediction WOULD have been
         let pastPred = "--";
         let statusHtml = "--";
         
         if(i + 1 < historyData.length) {
             const prev = historyData[i+1];
-            // Use current selected pattern to show how it would have performed?
-            // Or show what was actually predicted? 
-            // Usually users want to see how the CURRENT pattern performs history-wise.
             pastPred = patterns[currentPattern](prev.issueNumber, prev.number);
             
             const isWin = pastPred === actual;
             statusHtml = isWin ? '<span class="status-win">WIN</span>' : '<span class="status-lose">LOSE</span>';
         }
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+        const html = `
             <td>${item.issueNumber}</td>
             <td><span class="res-badge ${pastPred === 'BIG' ? 'res-big' : 'res-small'}">${pastPred}</span></td>
             <td><span class="res-badge ${actual === 'BIG' ? 'res-big' : 'res-small'}">${actual}</span></td>
             <td>${statusHtml}</td>
         `;
-        tbody.appendChild(tr);
+        const rowIndex = i + 1;
+        const existing = tbody.children[rowIndex];
+        if (existing) {
+            existing.innerHTML = html;
+        } else {
+            const tr = document.createElement('tr');
+            tr.className = 'row-enter';
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+            setTimeout(() => tr.classList.remove('row-enter'), 250);
+        }
+    }
+    while (tbody.children.length > Math.min(historyData.length, limit) + 1) {
+        const last = tbody.lastElementChild;
+        if (!last) break;
+        last.classList.add('row-exit');
+        setTimeout(() => {
+            if (last && last.parentNode) last.parentNode.removeChild(last);
+        }, 250);
     }
 }
 
 // --- DATA FETCHING ---
 async function startRound() {
     try {
-        const res = await fetch(LIVE_API, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(livePayload)});
+        const cfg = MODE_CONFIG[currentMode];
+        const res = await fetch(cfg.liveApi, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(cfg.livePayload)});
         const data = await res.json();
         const round = data.data;
         
@@ -636,7 +704,8 @@ async function startRound() {
 
 async function loadResults() {
     try {
-        const res = await fetch(RESULT_API, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(resultPayload)});
+        const cfg = MODE_CONFIG[currentMode];
+        const res = await fetch(cfg.resultApi, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(cfg.resultPayload)});
         const data = await res.json();
         if(data.data && data.data.list) {
             historyData = data.data.list;
