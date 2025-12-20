@@ -247,7 +247,7 @@ td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-al
 .mode-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
 .mode-tab { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: var(--text-secondary); font-size: 11px; cursor: pointer; }
 .mode-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(157,78,221,0.1); }
-
+.webview-frame { position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 0; }
 .row-enter { animation: slideDownIn 0.25s ease both; }
 .row-exit { animation: slideUpOut 0.25s ease both; }
 .switch-anim { animation: fadeSwap 0.25s ease both; }
@@ -345,7 +345,7 @@ td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); text-al
 </div>
 
 <!-- Website Frame -->
-<iframe src="https://www.cklottery.top/#/register?invitationCode=86224751753" style="position:fixed; top:0; left:0; width:100%; height:100%; border:none; z-index:0;"></iframe>
+<iframe src="https://www.cklottery.online/#/register?invitationCode=86224751753" class="webview-frame" id="webview" title="CK Lottery" allow="autoplay; encrypted-media" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" ></iframe>
 
 <script>
 // --- CONFIGURATION ---
